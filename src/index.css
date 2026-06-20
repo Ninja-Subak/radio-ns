@@ -6,6 +6,23 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+/* Disable user text selection and dragging globally across the app */
+html, body, #root {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Reinstate direct text interaction for input form controls */
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
 /* Premium custom range slider styling to guarantee horizontal lines are visible as a beautiful light gray across all browsers */
 input[type="range"] {
   -webkit-appearance: none;

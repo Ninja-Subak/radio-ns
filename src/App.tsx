@@ -75,6 +75,21 @@ export default function App() {
   const [isLoadingStream, setIsLoadingStream] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
 
+  // --- 2.5. Mechanical Tuning & Scanning Engine States ---
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanDirection, setScanDirection] = useState<'up' | 'down'>('up');
+  
+  // 전 대역 전체 자동 신호 스캔 가동 엔진 상태
+  const [isFullBandScanning, setIsFullBandScanning] = useState(false);
+  const [fullBandScanProgress, setFullBandScanProgress] = useState(0);
+  const [fullBandScanAlert, setFullBandScanAlert] = useState<string | null>(null);
+
+  const [inlineRegistering, setInlineRegistering] = useState(false);
+  const [inlineName, setInlineName] = useState('');
+  const [inlineUrl, setInlineUrl] = useState('');
+  const [inlineGenre, setInlineGenre] = useState('My Custom');
+  const [inlineError, setInlineError] = useState('');
+
   // Reference to track stream loading timeout
   const timeoutRef = useRef<number | null>(null);
 
@@ -102,6 +117,11 @@ export default function App() {
       setIsPlaying(false);
       setIsLoadingStream(false);
       setStreamError(null);
+      return;
+    }
+
+    // Guard stream router if automated motorized frequency sweeping is underway
+    if (isScanning) {
       return;
     }
 
@@ -161,7 +181,181 @@ export default function App() {
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
-  }, [currentFrequency, isPlaying, isPowerOn, stations]);
+  }, [currentFrequency, isPlaying, isPowerOn, stations, isScanning]);
+
+  // --- 4.5. Automated Scanning Sweep Loop & Form Resetter ---
+  useEffect(() => {
+    setInlineRegistering(false);
+    setInlineName('');
+    setInlineUrl('');
+    setInlineError('');
+  }, [currentFrequency]);
+
+  useEffect(() => {
+    if (!isPowerOn || !isScanning) return;
+
+    // Disengage active streaming audio and maximize static white noise for the motorized sweep feel
+    globalAudioEngine.pauseStream();
+    globalAudioEngine.setStaticVolume(1.0);
+
+    const sweepInterval = setInterval(() => {
+      setCurrentFrequency((prev) => {
+        let next = prev + (scanDirection === 'up' ? 0.1 : -0.1);
+        next = Math.round(next * 10) / 10;
+
+        // Roll over boundaries
+        if (next > 108.0) {
+          next = 87.5;
+        } else if (next < 87.5) {
+          next = 108.0;
+        }
+
+        // 1. Check exact match with existing radio station frequencies
+        const matchedStation = stations.find((st) => Math.abs(st.frequency - next) < 0.05);
+        if (matchedStation) {
+          setIsScanning(false);
+          setIsPlaying(true);
+          return matchedStation.frequency;
+        }
+
+        // 2. Check overlap with unmapped carrier-wave signal hotspots
+        const hotspots = [88.5, 92.1, 95.5, 98.1, 100.5, 102.7, 105.3, 107.5];
+        const isHotspot = hotspots.some((h) => Math.abs(h - next) < 0.05);
+        if (isHotspot) {
+          setIsScanning(false);
+          return next;
+        }
+
+        return next;
+      });
+    }, 150);
+
+    return () => {
+      clearInterval(sweepInterval);
+    };
+  }, [isPowerOn, isScanning, scanDirection, stations]);
+
+  // --- 4.6. 전 대역 신호 일과 고속 탐색 및 일괄 채널 개국 엔진 ---
+  useEffect(() => {
+    if (!isPowerOn || !isFullBandScanning) return;
+
+    // 스트림 오디오는 일시 중지하고 일체 전파 노이즈 극대화
+    globalAudioEngine.pauseStream();
+    globalAudioEngine.setStaticVolume(1.0);
+    setIsPlaying(false);
+
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += 5; // 약 2초간 진행 (5 * 20 = 100)
+      setFullBandScanProgress(Math.min(progress, 100));
+
+      // 주파수 바늘을 고속으로 지이잉 교란
+      setCurrentFrequency((prev) => {
+        let next = prev + 1.3;
+        if (next > 108.0) next = 87.5 + (next - 108.0);
+        return Math.round(next * 10) / 10;
+      });
+
+      if (progress >= 100) {
+        clearInterval(progressInterval);
+        
+        // 탐지 대상 핫스팟 목록
+        const hotspots = [88.5, 92.1, 95.5, 98.1, 100.5, 102.7, 105.3, 107.5];
+        
+        // 미등록 스펙트럼들 확인
+        const toRegister: RadioStation[] = [];
+        const SCAN_HOTSPOT_TEMPLATES: { [key: number]: { name: string; url: string; genre: string; desc: string } } = {
+          88.5: { 
+            name: "FM 88.5 Retro Synthwave", 
+            url: "https://stream.zeno.fm/f3bby88b9g8uv", 
+            genre: "신스웨이브",
+            desc: "어두운 밤 도심을 질주하는 아날로그 신디사이저와 드럼 머신 비트의 기계식 복고 주파수." 
+          },
+          92.1: { 
+            name: "FM 92.1 Midnight Classic Jazz", 
+            url: "https://live.jazz24.org/jazz24-mp3", 
+            genre: "재즈 클래식",
+            desc: "고유한 노이즈 텍스처를 품고 전송되는 정통 실시간 시애틀 재즈 전문 해외 국영 방송 노선." 
+          },
+          95.5: { 
+            name: "FM 95.5 K-Indie Horizon", 
+            url: "https://stream.zeno.fm/0ka26ndvbe8uv", 
+            genre: "K-인디",
+            desc: "감성적인 어쿠스틱 핑거스타일 선율과 새벽녘 잔인하도록 포근한 대한민국 독립 음악 채널." 
+          },
+          98.1: { 
+            name: "FM 98.1 Royal Symphony Orchestra", 
+            url: "https://stream.zeno.fm/f3bby88b9g8uv", 
+            genre: "오케스트라",
+            desc: "바흐, 모차르트부터 베토벤까지 유럽 황실 악단의 장엄하고 깊이감 넘치는 아쿠스틱 오케스트라 명곡 리스트." 
+          },
+          100.5: { 
+            name: "FM 100.5 Lo-Fi Sleepless Night", 
+            url: "https://stream.zeno.fm/0ka26ndvbe8uv", 
+            genre: "힐링 로파이",
+            desc: "잠 못 이루는 새벽, 작업과 학업에 고도의 차분함과 아늑함을 수놓아주는 노스탤지어 로파이 전파 대역." 
+          },
+          102.7: { 
+            name: "FM 102.7 Global Billboard Gold", 
+            url: "https://stream.zeno.fm/f3bby88b9g8uv", 
+            genre: "팝 / 록",
+            desc: "세대를 막론하고 전 세계 골든 디스크 명반들만을 정제하여 송수신하는 가벼운 위성 팝 수신망." 
+          },
+          105.3: { 
+            name: "FM 105.3 Ipanema Bosa Nova", 
+            url: "https://live.jazz24.org/jazz24-mp3", 
+            genre: "보사노바",
+            desc: "태양이 내리쬐는 부드러운 해안가 카페의 기타 아펠지오와 달콤하게 속삭이는 보컬 수선 레이어." 
+          },
+          107.5: { 
+            name: "FM 107.5 Liquid Ambient Focus", 
+            url: "https://stream.zeno.fm/0ka26ndvbe8uv", 
+            genre: "앰비언트",
+            desc: "뇌파를 유인하는 모노톤의 자연 및 주파수 변조 패드 선율로 스트레스를 해소하는 깊은 몰입용 사운드스케이프." 
+          }
+        };
+
+        hotspots.forEach((h) => {
+          const isAlreadyRegistered = stations.some((st) => Math.abs(st.frequency - h) < 0.05);
+          if (!isAlreadyRegistered) {
+            const tpl = SCAN_HOTSPOT_TEMPLATES[h];
+            if (tpl) {
+              const customId = `custom_scan_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+              toRegister.push({
+                id: customId,
+                name: tpl.name,
+                frequency: h,
+                url: tpl.url,
+                genre: tpl.genre,
+                description: tpl.desc,
+                country: "신호수색",
+                topic: "음악",
+                isCustom: true
+              });
+            }
+          }
+        });
+
+        if (toRegister.length > 0) {
+          setStations((prev) => [...prev, ...toRegister]);
+          // 제일 첫 번째로 등록된 주파수로 주파수 이동
+          const targetFreq = toRegister[0].frequency;
+          setCurrentFrequency(targetFreq);
+          setFullBandScanAlert(`전 대역 수색 완료! 신규 수신 채널 ${toRegister.length}개국을 새로 감지하고 수신 등록을 완수했습니다!`);
+        } else {
+          setFullBandScanAlert("전 대역 수색 완료! 이미 모든 수선 전선이 활성화되어 더 이상 추가할 무등록 전파 신호가 없습니다.");
+        }
+
+        setIsFullBandScanning(false);
+        setIsPlaying(true);
+        setTimeout(() => setFullBandScanAlert(null), 5000);
+      }
+    }, 100);
+
+    return () => {
+      clearInterval(progressInterval);
+    };
+  }, [isPowerOn, isFullBandScanning, stations]);
 
   // Sync Master Volume and EQ modifications
   useEffect(() => {
@@ -247,7 +441,34 @@ export default function App() {
   };
 
   useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDragStart = (e: DragEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    const handleSelectStart = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('selectstart', handleSelectStart);
+
     return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('selectstart', handleSelectStart);
       globalAudioEngine.destroy();
     };
   }, []);
@@ -488,14 +709,157 @@ export default function App() {
                         )}
                       </div>
                     ) : (
-                      <div className="text-neutral-500 flex flex-col gap-0.5 justify-center h-full py-2">
-                        <span className="text-xs font-mono font-semibold text-rose-500/70">
-                          - EMPTY FREQUENCY -
-                        </span>
-                        <p className="text-[10px] text-neutral-600">
-                          채널이 할당되지 않은 빈 주파수 대역입니다. 아날로그 백그라운드 잡음이 기본 활성화됩니다.
-                        </p>
-                      </div>
+                      inlineRegistering ? (
+                        <div className="text-neutral-200 flex flex-col gap-2 py-1 select-none">
+                          <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
+                            <span className="text-[10px] font-mono text-amber-500 font-bold flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                              FM {currentFrequency.toFixed(1)} MHz 신규 채널 개국
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setInlineRegistering(false)}
+                              className="bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-neutral-200 text-[10px] px-1.5 py-0.5 rounded cursor-pointer leading-none font-mono"
+                            >
+                              취소
+                            </button>
+                          </div>
+
+                          {/* Quick template pickers */}
+                          <div className="flex items-center gap-1.5 py-0.5">
+                            <span className="text-[9px] font-mono text-neutral-500">인기 프리셋:</span>
+                            <div className="flex gap-1">
+                              {[
+                                { name: 'K-Rock', url: 'https://stream.zeno.fm/f3bby88b9g8uv', genre: 'K-Rock' },
+                                { name: 'Lo-Fi', url: 'https://stream.zeno.fm/0ka26ndvbe8uv', genre: '로파이' },
+                                { name: 'Jazz FM', url: 'https://live.jazz24.org/jazz24-mp3', genre: '재즈' }
+                              ].map((tpl, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => {
+                                    setInlineName(`FM ${currentFrequency.toFixed(1)} ${tpl.name}`);
+                                    setInlineUrl(tpl.url);
+                                    setInlineGenre(tpl.genre);
+                                  }}
+                                  className="bg-neutral-900 hover:bg-amber-950/40 border border-neutral-800 hover:border-amber-600/30 text-neutral-400 hover:text-amber-400 text-[9px] px-2 py-0.5 rounded-lg cursor-pointer font-mono"
+                                >
+                                  {tpl.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Quick validation error message banner */}
+                          {inlineError && (
+                            <div className="text-[9.5px] font-mono font-bold text-rose-500 bg-rose-950/20 border border-rose-900/30 px-2 py-1 rounded">
+                              ⚠️ {inlineError}
+                            </div>
+                          )}
+
+                          {/* Quick inputs */}
+                          <div className="space-y-1.5">
+                            <div className="grid grid-cols-3 gap-2">
+                              <input
+                                type="text"
+                                placeholder="방송국명 (예: 내방 락방송)"
+                                value={inlineName}
+                                onChange={(e) => {
+                                  setInlineName(e.target.value);
+                                  setInlineError('');
+                                }}
+                                className="col-span-2 bg-neutral-950 border border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-[10.5px] p-1.5 text-neutral-200 focus:outline-none rounded-lg"
+                              />
+                              <input
+                                type="text"
+                                placeholder="장르 (예: J-Pop)"
+                                value={inlineGenre}
+                                onChange={(e) => {
+                                  setInlineGenre(e.target.value);
+                                  setInlineError('');
+                                }}
+                                className="bg-neutral-950 border border-neutral-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-[10.5px] p-1.5 text-neutral-200 focus:outline-none rounded-lg font-mono text-center"
+                              />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="인터넷 라디오 스트림 주소 (http...)"
+                              value={inlineUrl}
+                              onChange={(e) => {
+                                  setInlineUrl(e.target.value);
+                                  setInlineError('');
+                              }}
+                              className="w-full bg-neutral-950 border border-neutral-850 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-[10.5px] p-1.5 text-neutral-200 focus:outline-none rounded-lg font-mono"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!inlineName.trim()) {
+                                setInlineError('방송국 명칭을 입력해주세요.');
+                                return;
+                              }
+                              if (!inlineUrl.trim() || !inlineUrl.startsWith('http')) {
+                                setInlineError('스트리밍 주소 URL은 http로 시작해야 합니다.');
+                                return;
+                              }
+                              if (stations.some((st) => Math.abs(st.frequency - currentFrequency) < 0.05)) {
+                                setInlineError('이미 이 주파수에 등록된 방송국이 존재합니다.');
+                                return;
+                              }
+
+                              handleAddCustomStation({
+                                name: inlineName.trim(),
+                                frequency: currentFrequency,
+                                url: inlineUrl.trim(),
+                                genre: inlineGenre.trim() || 'Custom',
+                                description: '기계식 아날로그 다이얼 자동 스냅으로 탐색되어 개국된 신호 채널 수신망.',
+                                country: '사용자',
+                                topic: '음악'
+                              });
+                              setInlineRegistering(false);
+                              setIsPlaying(true);
+                            }}
+                            className="w-full py-1.5 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-[10.5px] font-mono rounded-lg transition-all cursor-pointer mt-1"
+                          >
+                            방송국 등록 완료 및 개국하기 ⚡
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-neutral-500 flex flex-col gap-2 justify-center h-full py-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-semibold text-rose-500/70">
+                              - EMPTY FREQUENCY -
+                            </span>
+                            {/* If frequency aligns with an empty signal transmitter hotspots */}
+                            {[88.5, 92.1, 95.5, 98.1, 100.5, 102.7, 105.3, 107.5].some((h) => Math.abs(h - currentFrequency) < 0.05) && (
+                              <span className="text-[9.5px] font-mono text-emerald-400 font-bold bg-emerald-950/40 border border-emerald-900/30 px-1.5 py-0.5 rounded animate-pulse select-none flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                공중 파형 신호 감지됨!
+                              </span>
+                            )}
+                          </div>
+                          
+                          <p className="text-[10px] text-neutral-650 leading-normal">
+                            채널이 프리셋되지 않은 대역입니다. 주파수 수신기를 정밀 동조하거나 채널 수신국을 개설하여 매핑할 수 있습니다.
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInlineRegistering(true);
+                              setInlineName(`FM ${currentFrequency.toFixed(1)} 사용자 라디오`);
+                              setInlineUrl('');
+                              setInlineGenre('My Custom');
+                              setInlineError('');
+                            }}
+                            className="w-full py-1.5 bg-neutral-950 hover:bg-amber-955/50 border border-neutral-800 hover:border-amber-600/40 text-neutral-400 hover:text-amber-400 font-mono text-[10px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all mt-1"
+                          >
+                            📻 이 주파수 수신국 등록 채널 개설하기
+                          </button>
+                        </div>
+                      )
                     )
                   ) : (
                     <div className="text-neutral-700 text-xs py-2 font-mono flex items-center justify-center gap-1.5 text-center h-full">
@@ -543,12 +907,37 @@ export default function App() {
 
               </div>
 
+              {/* 전 대역 수색 완료 팝업 알림 배너 */}
+              {fullBandScanAlert && (
+                <div className="mt-3 p-3 bg-emerald-950/85 border border-emerald-500/30 text-emerald-300 rounded-xl text-[11px] font-mono flex items-start gap-2 shadow-[0_4px_16px_rgba(16,185,129,0.12)] animate-pulse select-none">
+                  <span className="text-emerald-400 font-bold shrink-0">📡 SYSTEM:</span>
+                  <p className="flex-1 leading-normal">{fullBandScanAlert}</p>
+                </div>
+              )}
+
               {/* TUNING COMPONENT INTEGRATION */}
               <RadioTuner 
                 currentFrequency={currentFrequency} 
                 stations={stations} 
                 onFrequencyChange={setCurrentFrequency}
                 isPowerOn={isPowerOn}
+                isScanning={isScanning}
+                scanDirection={scanDirection}
+                onStartScan={(dir) => {
+                  setScanDirection(dir);
+                  setIsScanning(true);
+                }}
+                onStopScan={() => {
+                  setIsScanning(false);
+                  setIsPlaying(true);
+                }}
+                isFullBandScanning={isFullBandScanning}
+                fullBandScanProgress={fullBandScanProgress}
+                onFullBandScanAndRegister={() => {
+                  if (!isFullBandScanning) {
+                    setIsFullBandScanning(true);
+                  }
+                }}
               />
 
               {/* Master Control Board toggling static manually */}

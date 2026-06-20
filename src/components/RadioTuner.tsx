@@ -12,6 +12,13 @@ interface RadioTunerProps {
   stations: RadioStation[];
   onFrequencyChange: (freq: number) => void;
   isPowerOn: boolean;
+  isScanning?: boolean;
+  scanDirection?: 'up' | 'down';
+  onStartScan?: (dir: 'up' | 'down') => void;
+  onStopScan?: () => void;
+  isFullBandScanning?: boolean;
+  fullBandScanProgress?: number;
+  onFullBandScanAndRegister?: () => void;
 }
 
 export const RadioTuner: React.FC<RadioTunerProps> = ({
@@ -19,6 +26,13 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
   stations,
   onFrequencyChange,
   isPowerOn,
+  isScanning = false,
+  scanDirection = 'up',
+  onStartScan,
+  onStopScan,
+  isFullBandScanning = false,
+  fullBandScanProgress = 0,
+  onFullBandScanAndRegister,
 }) => {
   const tunerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -34,6 +48,7 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isPowerOn || !tunerRef.current) return;
+    if (onStopScan) onStopScan(); // Disengage auto scan on manual touch
     setIsDragging(true);
     updateFrequencyFromX(e.clientX);
     tunerRef.current.setPointerCapture(e.pointerId);
@@ -194,12 +209,15 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
       {/* Dial Controls (Fine speed adjustments) */}
       <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
         {/* Fine Tuning controls */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <button
             id="fine-tune-down"
             disabled={!isPowerOn}
-            onClick={() => handleFineTune(-0.1)}
-            className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono text-neutral-300 font-medium cursor-pointer flex items-center gap-1"
+            onClick={() => {
+              if (onStopScan) onStopScan();
+              handleFineTune(-0.1);
+            }}
+            className="px-2.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono text-neutral-300 font-medium cursor-pointer flex items-center gap-1"
           >
             ◀ 0.1 MHz
           </button>
@@ -207,14 +225,56 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
           <button
             id="fine-tune-up"
             disabled={!isPowerOn}
-            onClick={() => handleFineTune(0.1)}
-            className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono text-neutral-300 font-medium cursor-pointer flex items-center gap-1"
+            onClick={() => {
+              if (onStopScan) onStopScan();
+              handleFineTune(0.1);
+            }}
+            className="px-2.5 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono text-neutral-300 font-medium cursor-pointer flex items-center gap-1"
           >
             0.1 MHz ▶
           </button>
 
+          {/* Automatic Signal Scan Buttons */}
+          <button
+            id="auto-scan-down"
+            disabled={!isPowerOn}
+            onClick={() => onStartScan && onStartScan('down')}
+            className={`px-2.5 py-1.5 border rounded-lg text-xs font-mono transition-all flex items-center gap-1 cursor-pointer disabled:opacity-35 ${
+              isScanning && scanDirection === 'down'
+                ? 'bg-rose-950/60 border-rose-500 text-rose-400 font-bold animate-pulse'
+                : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-400 hover:text-neutral-200'
+            }`}
+            title="아래 주파수 대역으로 자동 스냅 탐색"
+          >
+            ◀ AUTO SCAN
+          </button>
+
+          <button
+            id="auto-scan-up"
+            disabled={!isPowerOn}
+            onClick={() => onStartScan && onStartScan('up')}
+            className={`px-2.5 py-1.5 border rounded-lg text-xs font-mono transition-all flex items-center gap-1 cursor-pointer disabled:opacity-35 ${
+              isScanning && scanDirection === 'up'
+                ? 'bg-emerald-950/60 border-emerald-500 text-emerald-400 font-bold animate-pulse'
+                : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-400 hover:text-neutral-200'
+            }`}
+            title="위 주파수 대역으로 자동 스냅 탐색"
+          >
+            AUTO SCAN ▶
+          </button>
+
+          {isScanning && (
+            <button
+              id="stop-scan"
+              onClick={onStopScan}
+              className="px-3 py-1.5 bg-red-950 border border-red-500 text-red-400 text-xs font-mono font-bold rounded-lg cursor-pointer animate-pulse"
+            >
+              STOP
+            </button>
+          )}
+
           {/* Preset fast scan helper */}
-          {isPowerOn && nearestInfo && nearestInfo.distance > 0 && nearestInfo.distance <= 0.3 && (
+          {isPowerOn && !isScanning && nearestInfo && nearestInfo.distance > 0 && nearestInfo.distance <= 0.3 && (
             <button
               id="auto-snap-tuner"
               onClick={() => onFrequencyChange(nearestInfo.station.frequency)}
@@ -252,6 +312,58 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
           )}
         </div>
       </div>
+
+      {/* 전 대역 일제 주파수 서치 스캐너 모듈 */}
+      {isPowerOn && (
+        <div className="mt-4 p-3 bg-neutral-950/45 hover:bg-neutral-950/70 border border-neutral-900 border-dashed rounded-xl transition-all duration-300 text-left select-none">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="p-1 rounded bg-amber-500/10 text-amber-500 shrink-0">
+              <Radio className="w-3.5 h-3.5 animate-pulse" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] uppercase tracking-wider font-mono font-bold text-amber-500/90 block truncate">
+                FM Full-Spectrum Airwave Interceptor
+              </span>
+              <span className="text-[9.5px] text-neutral-400 block truncate font-sans">
+                정밀 스펙트럼 수색 검출기
+              </span>
+            </div>
+          </div>
+          
+          <p className="text-[10.5px] text-neutral-400 leading-normal font-sans mb-3 pr-1">
+            공중 주파수 대역(87.5 ~ 108.0 MHz) 전 범위를 초고속 정밀 스캔하여 감지되는 원시 신호 핫스팟들을 분석해 수신가능한 방송 채널로 일괄 자동 개설합니다.
+          </p>
+
+          <div className="w-full">
+            {isFullBandScanning ? (
+              <div className="w-full bg-black/60 border border-amber-600/30 rounded-lg p-2.5 flex flex-col gap-2 select-none text-[11px] font-mono">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                    광대역 주파수 탐색 및 변조 분석 중...
+                  </span>
+                  <span className="text-[10.5px] font-bold text-amber-500">{fullBandScanProgress}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-100"
+                    style={{ width: `${fullBandScanProgress}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                id="full-band-scan-trigger"
+                onClick={onFullBandScanAndRegister}
+                className="w-full py-2 px-3 bg-neutral-900 hover:bg-amber-950 border border-neutral-800 hover:border-amber-600/40 text-amber-400 hover:text-amber-300 font-mono text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.4)] active:scale-[0.98]"
+              >
+                ⚡ 전 대역 신호 자동 검출 및 일괄 등록
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -7,6 +7,16 @@ import { RadioStation } from '../types';
 
 export const DEFAULT_STATIONS: RadioStation[] = [
   {
+    id: 'gbn-kpop',
+    name: 'GBN K-Pop Retro Sound',
+    frequency: 87.7,
+    url: 'https://stream.zeno.fm/0t5gky1qxe8uv',
+    genre: '케이팝 레트로',
+    country: '대한민국',
+    topic: '음악',
+    description: '90년대부터 2010년대까지 가슴 뭉클한 클래식 K-Pop 발라드와 댄스 가요들을 엄선하여 재생합니다.'
+  },
+  {
     id: 'lofi-sora',
     name: 'Sora Lofi Ambient',
     frequency: 88.1,
@@ -17,14 +27,34 @@ export const DEFAULT_STATIONS: RadioStation[] = [
     description: '작업하거나 휴식할 때 좋은 몽환적인 감성 로파이 비트와 조용한 아날로그 질감의 사운드.'
   },
   {
+    id: 'ebs-bandi',
+    name: 'EBS FM 책 읽어주는 라디오',
+    frequency: 88.9,
+    url: 'http://ebsonair.ebs.co.kr/fmradiobandi/bandihq/playlist.m3u8',
+    genre: '교양 / 오디오북',
+    country: '대한민국',
+    topic: '교양/학습',
+    description: '교육 방송 EBS 대표 온에어. 에세이, 세계 문학 낭독 및 수준 높은 인문학 강좌가 흘러갑니다.'
+  },
+  {
     id: 'tbs-seoul',
     name: 'TBS FM Seoul 95.1 (교통방송)',
     frequency: 89.5,
     url: 'http://58.229.191.125:1935/live/fm.stream/playlist.m3u8',
-    genre: '실시간 교통 / 종합 뉴스',
+    genre: '교통 / 뉴스',
     country: '대한민국',
     topic: '뉴스/시사',
-    description: '서울 및 수도권 중심의 실시간 종합 교통 정보, 시사 평론, 다양한 교양 토크 및 뉴스 대담 생방송.'
+    description: '서울 실시간 교통 정보, 심도 깊은 시사 토크와 기사 평론 및 유익한 교양 정보를 제공하는 공익 채널.'
+  },
+  {
+    id: 'fip-paris',
+    name: 'FIP Radio Paris Live',
+    frequency: 90.3,
+    url: 'https://stream.radiofrance.fr/fip/fip.mp3',
+    genre: '재즈 / 일렉트로 / 인디',
+    country: '프랑스',
+    topic: '음악',
+    description: '광고 없이 예술적인 선율로 전 세계 인디 락, 월드 뮤직, 어쿠스틱을 솜씨 있게 블렌딩하는 전설적인 프랑스 공영 채널.'
   },
   {
     id: 'kpop-hallyu',
@@ -34,7 +64,17 @@ export const DEFAULT_STATIONS: RadioStation[] = [
     genre: '케이팝 Hits',
     country: '대한민국',
     topic: '음악',
-    description: '트렌디한 인기 케이팝 아이돌 신곡부터 가슴을 뛰게 하는 추억의 댄스 곡까지 쉬지 않고 재생하는 대중가요 채널.'
+    description: '글로벌 차트를 주름잡는 화려한 최신 케이팝 보이/걸그룹 타이틀 곡 및 뜨거운 댄스 넘버 논스톱 플레이.'
+  },
+  {
+    id: 'cafe-piano',
+    name: 'Cafe Piano Melody Room',
+    frequency: 91.9,
+    url: 'https://stream.zeno.fm/ym95p9e6p0hvv',
+    genre: '피아노 연주',
+    country: '일본',
+    topic: '힐링/로파이',
+    description: '비 온 뒤 촉촉한 아침의 노천카페 정경을 담아낸 듯 마음을 수놓는 아늑하고 은은한 클래식/재즈 피아노 연주곡.'
   },
   {
     id: 'febc-seoul',
@@ -44,7 +84,17 @@ export const DEFAULT_STATIONS: RadioStation[] = [
     genre: '문화 교양 / 정보',
     country: '대한민국',
     topic: '교양/학습',
-    description: '지친 심신에 활력을 불어넣는 24시간 생활 건강 정보, 긍정에너지 캠페인, 따뜻한 힐링 음악 프로그램.'
+    description: '희망을 노래하는 잔잔한 경음악과 따뜻한 힐링 토크, 활력을 가득 심어주는 다채로운 생활 교양 에세이.'
+  },
+  {
+    id: 'citypop-japan',
+    name: 'Tokyo City Pop 24/7',
+    frequency: 93.3,
+    url: 'https://stream.zeno.fm/2v2xbyu1098uv',
+    genre: '시티팝 / 그루브',
+    country: '일본',
+    topic: '음악',
+    description: '여름밤 청량한 바람과 화려한 도심 불빛 아래 달리는 차창 밖 풍경에 완벽히 어울리는 복고풍 오리지널 시티팝 리듬.'
   },
   {
     id: 'npr-news',
@@ -54,7 +104,17 @@ export const DEFAULT_STATIONS: RadioStation[] = [
     genre: '보도 시사 / 문화 대담',
     country: '미국',
     topic: '뉴스/시사',
-    description: '미국 전역 및 세계 주요 뉴스를 송출하는 국민 대표 라디오. 고품격 오디오 브리핑과 깊이 있는 분석 프로그램.'
+    description: '공정하고 심지 굳은 미국 국영 헤드라인 보도. 수준급 오디오 인터뷰와 폭넓은 세계 정세 분석 제공.'
+  },
+  {
+    id: 'anime-premium',
+    name: 'Studio Ghibli & Anime OST',
+    frequency: 94.7,
+    url: 'https://stream.zeno.fm/n30b7hpsbe8uv',
+    genre: '애니메이션 OST',
+    country: '일본',
+    topic: '음악',
+    description: '감성이 고스란히 젖어드는 아련한 추억의 하이라이트 애니메이션 피아노 선율과 청아한 코러스 테마 플레이리스트.'
   },
   {
     id: 'lofi-cafe',
@@ -64,17 +124,47 @@ export const DEFAULT_STATIONS: RadioStation[] = [
     genre: '인디 로파이 힙합',
     country: '미국',
     topic: '힐링/로파이',
-    description: '글로벌 청취자들이 가장 사랑하는 트렌디한 로파이 인스트루멘탈 힙합 채널. 백그라운드 집중용 음악으로 탁월.'
+    description: '해외 매니아들의 극찬을 받는 따끈한 정통 Lo-Fi 힙합 인스트루멘탈. 세련된 비트로 백그라운드 집중용으로 강력 추천.'
+  },
+  {
+    id: 'classic-rock',
+    name: 'Classic Rock & Metal Anthem',
+    frequency: 96.3,
+    url: 'https://stream.zeno.fm/6swzsy77p0hvv',
+    genre: '클래식 락앤롤',
+    country: '미국',
+    topic: '음악',
+    description: '락 역사 속 명장들의 불멸하는 드럼 비트와 화려한 기타 기프. 전율 넘치는 정통 하드락 클래식.'
+  },
+  {
+    id: 'smooth-jazz',
+    name: 'Smooth Jazz Late Night',
+    frequency: 96.9,
+    url: 'https://stream.zeno.fm/7k9epu81t8uvw',
+    genre: '스무스 재즈 / 알앤비',
+    country: '미국',
+    topic: '음악',
+    description: '무게감 있는 더블 베이스와 서정적이고 현대적인 색소폰 선율이 빚어내는 도시의 나른한 밤 분위기 야상곡.'
   },
   {
     id: 'jazz-seattle',
     name: 'Jazz24 Seattle KNKX',
     frequency: 97.5,
     url: 'https://live.jazz24.org/jazz24-mp3',
-    genre: '정통 재즈 / 소울 블루스',
+    genre: '정통 재즈 / 블루스',
     country: '미국',
     topic: '음악',
-    description: '미국 시애틀 최고의 라디오 방송국에서 선사하는 정통 클래식 재즈 감상 공간. 빌 에반스, 레이 브라운 등의 리듬.'
+    description: '미국 시애틀 최고의 헤리티지 재즈 채널. 마일스 데이비스 등 거장들이 선사하는 황홀한 블루지 리빙룸 라운지.'
+  },
+  {
+    id: 'bbc-radio1',
+    name: 'BBC Radio 1 UK London',
+    frequency: 98.3,
+    url: 'https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one',
+    genre: '인디 / 일렉트로 / 팝',
+    country: '영국',
+    topic: '음악',
+    description: '트렌드의 첨단을 달리는 BBC의 젊은 대표 채널. 신인 아티스트 인디 브릿팝과 환상적인 댄스 클러빙 믹스 방송.'
   },
   {
     id: 'swiss-pop',
@@ -82,39 +172,69 @@ export const DEFAULT_STATIONS: RadioStation[] = [
     frequency: 99.1,
     url: 'http://stream.srg-ssr.ch/m/rsp/mp3_128',
     genre: '글로벌 팝 Hits',
-    country: '스위스 & 유럽',
+    country: '스위스',
     topic: '음악',
-    description: '스위스 공영방송(SSR)이 운영하는 품격 있는 논스톱 팝송 채널. 광고가 전혀 없이 트렌디하고 감미로운 곡들 엄선.'
+    description: '유럽 명가 스위스 공영방송(SSR) 제작. 불필요한 사담 없이 아침잠을 은은하게 깨워주는 세련된 정통 발라드, 팝송송출.'
   },
   {
     id: 'swiss-jazz',
     name: 'Radio Swiss Jazz Live',
     frequency: 100.5,
     url: 'http://stream.srg-ssr.ch/m/rsj/mp3_128',
-    genre: '어쿠스틱 재즈 스탠다드',
-    country: '스위스 & 유럽',
+    genre: '재즈 스탠다드 연주',
+    country: '스위스',
     topic: '음악',
-    description: '광고나 긴 수다 없이 24시간 연주 음악 위주로 감상할 수 있는 감성 풍부한 고품질 재즈 전문 공영 방송 채널.'
+    description: '광고 비중 제로의 완벽히 깔끔한 24시간 피아노-트럼펫-섹션 정통 어쿠스틱 연주 실황 전문 클래식 라운지.'
+  },
+  {
+    id: 'france-musique',
+    name: 'France Musique Classique',
+    frequency: 101.3,
+    url: 'https://stream.radiofrance.fr/francemusique/francemusique.mp3',
+    genre: '교향 정통 클래식',
+    country: '프랑스',
+    topic: '교양/학습',
+    description: '프랑스 국립 라디오 중계센터 오리지널 실황. 엄숙하고 유려하게 흐르는 바로크 및 현악 사중주 향연.'
   },
   {
     id: 'swiss-classic',
     name: 'Radio Swiss Classic Radio',
     frequency: 102.1,
     url: 'http://stream.srg-ssr.ch/m/rsc_kr/mp3_128',
-    genre: '정통 Classical 스튜디오',
-    country: '스위스 & 유럽',
+    genre: '교향곡 / 협주곡 클래식',
+    country: '스위스',
     topic: '교양/학습',
-    description: '최상급 오케스트라 명장들의 실황 연주곡과 협주악 등 긴장을 녹이고 뇌를 깨워주는 오리지널 클래식 선율.'
+    description: '명실상부 스위스 심포니 단원 고품질 라이브 하이라이트. 온전한 명상과 인지력 향상에 어울리는 최적의 힐링 곡들.'
+  },
+  {
+    id: 'wqxr-classical',
+    name: 'WQXR 105.9 FM New York Classical',
+    frequency: 102.9,
+    url: 'https://stream.wqxr.org/wqxr.mp3',
+    genre: '클래식 명작선',
+    country: '미국',
+    topic: '음악',
+    description: '미국 뉴욕에서 직접 발송하는 초강력 지미 앤 모차르트 클래식 네트워크. 최고의 예술적 풍미를 보장합니다.'
   },
   {
     id: 'classic-fm-london',
     name: 'Classic FM London 93.9',
     frequency: 103.9,
     url: 'https://media-ssl.musicradio.com/ClassicFM',
-    genre: '정통 낭만 클래식',
+    genre: '낭만주의 클래식',
     country: '영국',
     topic: '음악',
-    description: '영국 런던에서 발송하는 대규모 정통 클래식 종합 플레이 채널. 전 세계 명 사운드로 귀를 채워줍니다.'
+    description: '영국 황실 오케스트라 특설 라이브 테이프 리플레이를 바탕으로, 편안함 속 몰입을 이끌어 주는 환상적인 선율.'
+  },
+  {
+    id: 'lofi-chillhop-instrumental',
+    name: 'Chillhop Instrumental Study',
+    frequency: 104.7,
+    url: 'https://stream.zeno.fm/f38un093ne8uv',
+    genre: '로파이 / 초집중 비트',
+    country: '독일',
+    topic: '힐링/로파이',
+    description: '지나친 자극을 정화하여 부드러운 화이트 노이즈처럼 흐르는 인스트루멘탈 힙합 루프. 독서와 작업용 배경 음악.'
   },
   {
     id: 'bbc-world-service',
@@ -124,26 +244,36 @@ export const DEFAULT_STATIONS: RadioStation[] = [
     genre: '글로벌 심층 보도 뉴스',
     country: '영국',
     topic: '뉴스/시사',
-    description: 'BBC 월드 특파원 전용망을 경유한 신속 정확한 지구촌 헤드라인 보도 뉴스 및 영문 리스닝 시사 교양.'
+    description: '전 세계의 시선이 집중되는 팩트 기반 헤드라인 뉴스룸 라이브. 실감 나고 지적인 뉴스 브리핑 인터뷰.'
   },
   {
     id: 'france-info',
     name: 'France Info Radio 106.3',
     frequency: 106.3,
     url: 'https://stream.radiofrance.fr/franceinfo/franceinfo.mp3',
-    genre: '프랑스 뉴스 / 예술 정보',
-    country: '스위스 & 유럽',
+    genre: '세계 동향 / 종합 기획 뉴스',
+    country: '프랑스',
     topic: '뉴스/시사',
-    description: '문화 예술의 중심지 파리에서 보내는 실시간 종합 프랑스 뉴스 브리핑, 기획 탐사 보도 및 문화 정세 대담.'
+    description: '실시간으로 갱신되는 유력 월드 뉴스 브리핑, 프랑스 현지 문화 정세 탐사 리포트 전문 24시간 뉴스 채널.'
+  },
+  {
+    id: 'synthwave-retro',
+    name: 'Neon Retro Synthwave Ride',
+    frequency: 106.9,
+    url: 'https://stream.zeno.fm/8qguxay2be8uv',
+    genre: '신스웨이브 / 신스팝',
+    country: '미국',
+    topic: '음악',
+    description: '도심 속 네온 사인이 속도감 있게 스치는 화려한 사이버펑크 감성의 80s 아날로그 아웃런 전자음악.'
   },
   {
     id: 'venice-classic',
     name: 'Venice Classic Radio Venice',
     frequency: 107.7,
     url: 'http://174.36.206.197:8000/stream',
-    genre: '바로크 르네상스 고전',
-    country: '스위스 & 유럽',
+    genre: '르네상스 / 바로크 기악',
+    country: '이탈리아',
     topic: '교양/학습',
-    description: '이탈리아 베네치아 예술의 전성기였던 중세, 바로크, 르네상스 시대의 섬세한 기악 및 기악곡 송출 채널.'
+    description: '예술 부흥의 찬란한 산실 베네치아 학파 정통 오케스트라 하프시코드 및 현악 중주 등의 고풍스러운 명곡 엄선.'
   }
 ];

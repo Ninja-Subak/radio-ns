@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RadioStation } from '../types';
 import { Bookmark, BookmarkCheck, Trash2, Heart, Search, HelpCircle, Radio } from 'lucide-react';
 
@@ -29,11 +29,24 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
   isPowerOn,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'favorites' | 'custom'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'favorites' | 'custom' | 'onair'>('all');
   const [selectedCountry, setSelectedCountry] = useState<string>('전체');
   const [selectedTopic, setSelectedTopic] = useState<string>('전체');
+  
+  // Real-time playability cache verification state
+  const [verifiedPlayable, setVerifiedPlayable] = useState<{ [id: string]: boolean }>(() => {
+    const initial: { [id: string]: boolean } = {};
+    stations.forEach((st) => {
+      // Initialize only robust safe https sources as potentially checked
+      initial[st.id] = typeof st.url === 'string' && st.url.startsWith('https://');
+    });
+    return initial;
+  });
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  // Search/Filter logical sequence
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Search/Filter logical sequence (defined early to prevent temporal dead zone in useEffect hooks)
   const filteredStations = stations.filter((st) => {
     const matchesSearch = 
       st.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -45,7 +58,8 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
     const matchesTab = 
       filterType === 'all' ||
       (filterType === 'favorites' && favorites.includes(st.id)) ||
-      (filterType === 'custom' && st.isCustom === true);
+      (filterType === 'custom' && st.isCustom === true) ||
+      (filterType === 'onair' && verifiedPlayable[st.id] === true);
 
     // Country Filter
     const matchesCountry = 
@@ -60,6 +74,156 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
 
     return matchesSearch && matchesTab && matchesCountry && matchesTopic;
   });
+
+  // Background Stream Probe Thread using smart HTMLAudioElement probes
+  useEffect(() => {
+    let active = true;
+    setIsVerifying(true);
+
+    const checkChannelPlayability = (url: string): Promise<boolean> => {
+      return new Promise((resolve) => {
+        if (typeof url !== 'string' || !url.startsWith('https://')) {
+          resolve(false);
+          return;
+        }
+
+        const audio = new Audio();
+        audio.muted = true;
+        audio.volume = 0;
+        
+        let resolved = false;
+
+        const cleanup = () => {
+          try {
+            audio.removeEventListener('loadedmetadata', handleSuccess);
+            audio.removeEventListener('canplay', handleSuccess);
+            audio.removeEventListener('error', handleFailure);
+            audio.removeEventListener('stalled', handleFailure);
+            audio.removeEventListener('abort', handleFailure);
+            audio.pause();
+            audio.src = '';
+            audio.load();
+          } catch (e) {
+            // Ignore clean up errors
+          }
+        };
+
+        const handleSuccess = () => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timeoutId);
+          cleanup();
+          resolve(true);
+        };
+
+        const handleFailure = () => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timeoutId);
+          cleanup();
+          resolve(false);
+        };
+
+        audio.addEventListener('loadedmetadata', handleSuccess);
+        audio.addEventListener('canplay', handleSuccess);
+        audio.addEventListener('error', handleFailure);
+        audio.addEventListener('stalled', handleFailure);
+        audio.addEventListener('abort', handleFailure);
+
+        const timeoutId = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            resolve(false);
+          }
+        }, 2200); // 2.2 second real-time response grace window
+
+        try {
+          audio.src = url;
+          audio.load();
+        } catch (e) {
+          clearTimeout(timeoutId);
+          handleFailure();
+        }
+      });
+    };
+
+    const checkAll = async () => {
+      const targetStations = stations;
+      
+      // Batch channels to prevent concurrent connection limits
+      const batchSize = 4;
+      for (let i = 0; i < targetStations.length; i += batchSize) {
+        if (!active) break;
+        const batch = targetStations.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (st) => {
+          const isPlayable = await checkChannelPlayability(st.url);
+          if (active) {
+            setVerifiedPlayable(prev => ({
+              ...prev,
+              [st.id]: isPlayable
+            }));
+          }
+        }));
+      }
+      
+      if (active) {
+        setIsVerifying(false);
+      }
+    };
+
+    checkAll();
+
+    return () => {
+      active = false;
+    };
+  }, [stations]);
+
+  // 자동 인입 정렬 스크롤 및 필터 초기화 정합 엔진
+  useEffect(() => {
+    if (activeStationId) {
+      const isCurrentlyVisible = filteredStations.some(st => st.id === activeStationId);
+      if (!isCurrentlyVisible) {
+        setFilterType('all');
+        setSelectedCountry('전체');
+        setSelectedTopic('전체');
+        setSearchQuery('');
+        
+        const timer = setTimeout(() => {
+          const cardEl = document.getElementById(`station-card-${activeStationId}`);
+          if (cardEl) {
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 150);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(() => {
+          const cardEl = document.getElementById(`station-card-${activeStationId}`);
+          if (cardEl) {
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 80);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [activeStationId]);
+
+  // Helper to map country to flag emoji
+  const getCountryEmoji = (country?: string) => {
+    if (!country) return '🌍 ';
+    switch (country) {
+      case '대한민국': return '🇰🇷 ';
+      case '미국': return '🇺🇸 ';
+      case '영국': return '🇬🇧 ';
+      case '스위스': return '🇨🇭 ';
+      case '프랑스': return '🇫🇷 ';
+      case '일본': return '🇯🇵 ';
+      case '이탈리아': return '🇮🇹 ';
+      case '독일': return '🇩🇪 ';
+      default: return '🌍 ';
+    }
+  };
 
   return (
     <div className="bg-neutral-900 border-2 border-neutral-800 rounded-2xl p-5 flex flex-col h-full">
@@ -87,12 +251,12 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
 
         {/* Filters Selectors */}
         <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-1.5 p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
             <button
               onClick={() => setFilterType('all')}
-              className={`flex-1 text-center py-2 text-xs font-medium rounded-lg transition-all ${
+              className={`text-center py-2 text-xs font-medium rounded-lg transition-all ${
                 filterType === 'all'
-                  ? 'bg-neutral-800 text-amber-400 shadow'
+                  ? 'bg-neutral-800 text-amber-400 shadow font-bold'
                   : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
@@ -100,9 +264,9 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
             </button>
             <button
               onClick={() => setFilterType('favorites')}
-              className={`flex-1 text-center py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1 ${
+              className={`text-center py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1 ${
                 filterType === 'favorites'
-                  ? 'bg-neutral-800 text-pink-400 shadow'
+                  ? 'bg-neutral-800 text-pink-400 shadow font-bold'
                   : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
@@ -111,13 +275,37 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
             </button>
             <button
               onClick={() => setFilterType('custom')}
-              className={`flex-1 text-center py-2 text-xs font-medium rounded-lg transition-all ${
+              className={`text-center py-2 text-xs font-medium rounded-lg transition-all ${
                 filterType === 'custom'
-                  ? 'bg-neutral-800 text-emerald-400 shadow'
+                  ? 'bg-neutral-800 text-emerald-400 shadow font-bold'
                   : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
               사용자 채널
+            </button>
+            <button
+              onClick={() => setFilterType('onair')}
+              className={`text-center py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                filterType === 'onair'
+                  ? 'bg-neutral-850 border border-emerald-500/40 text-emerald-400 shadow font-bold'
+                  : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+              title="현재 실시간으로 정상 청취 및 연결 수신이 가능한 오디오 채널망들을 여과합니다."
+            >
+              <span className={`w-1.5 h-1.5 rounded-full inline-block ${
+                !isPowerOn || !activeStationId
+                  ? 'bg-neutral-600'
+                  : streamStatus === 'loading'
+                  ? 'bg-amber-500 animate-pulse'
+                  : streamStatus === 'active'
+                  ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+                  : 'bg-emerald-500'
+              }`}></span>
+              현재 방송 가능 ({isVerifying ? (
+                <span className="text-[10px] text-amber-500 animate-pulse">검사중..</span>
+              ) : (
+                Object.values(verifiedPlayable).filter(Boolean).length
+              )})
             </button>
           </div>
 
@@ -137,7 +325,12 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
                 <option value="대한민국">🇰🇷 대한민국</option>
                 <option value="미국">🇺🇸 미국</option>
                 <option value="영국">🇬🇧 영국</option>
-                <option value="스위스 & 유럽">🇪🇺 유럽</option>
+                <option value="스위스">🇨🇭 스위스</option>
+                <option value="프랑스">🇫🇷 프랑스</option>
+                <option value="일본">🇯🇵 일본</option>
+                <option value="이탈리아">🇮🇹 이탈리아</option>
+                <option value="독일">🇩🇪 독일</option>
+                <option value="사용자">🛠️ 사용자 채널</option>
               </select>
             </div>
 
@@ -163,14 +356,17 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
       </div>
 
       {/* Grid Wrapper */}
-      <div className="flex-1 overflow-y-auto max-h-[360px] pr-1 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto max-h-[360px] pr-1 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent"
+      >
         {filteredStations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center text-neutral-500">
             <HelpCircle className="w-8 h-8 mb-2 text-neutral-600 animate-bounce" />
             <p className="text-xs font-mono">수신 필터에 부합하는 방송국이 없습니다.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-8 pt-1">
             {filteredStations.map((st) => {
               const isActive = activeStationId === st.id;
               const isFav = favorites.includes(st.id);
@@ -178,6 +374,7 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
               return (
                 <div
                   key={st.id}
+                  id={`station-card-${st.id}`}
                   className={`group relative flex flex-col justify-between p-4 rounded-xl border transition-all duration-300 select-none ${
                     isActive
                       ? 'bg-neutral-950 border-amber-500/60 shadow-[0_4px_16px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/30'
@@ -253,9 +450,22 @@ export const PresetGrid: React.FC<PresetGridProps> = ({
                       <span className="inline-block px-1.5 py-0.5 bg-neutral-900 border border-neutral-850 text-[9px] font-medium rounded text-yellow-500/90 font-bold">
                         {st.genre}
                       </span>
+                      {verifiedPlayable[st.id] === true ? (
+                        <span className="inline-block px-1 py-0.5 bg-emerald-950/20 border border-emerald-500/20 text-[9px] rounded font-mono text-emerald-400 leading-none">
+                          ● 수신가능
+                        </span>
+                      ) : verifiedPlayable[st.id] === false ? (
+                        <span className="inline-block px-1 py-0.5 bg-rose-950/20 border border-rose-500/20 text-[9px] rounded font-mono text-rose-400/80 leading-none">
+                          ✖ 수신제한
+                        </span>
+                      ) : (
+                        <span className="inline-block px-1 py-0.5 bg-neutral-900 border border-neutral-850 text-[9px] rounded font-mono text-neutral-400 animate-pulse leading-none">
+                          ● 확인중
+                        </span>
+                      )}
                       {st.country && (
                         <span className="inline-block px-1.2 py-0.5 bg-neutral-900/60 border border-neutral-850 text-[9px] font-sans rounded text-neutral-400 leading-none">
-                          {st.country === '대한민국' ? '🇰🇷 ' : st.country === '미국' ? '🇺🇸 ' : st.country === '영국' ? '🇬🇧 ' : st.country === '스위스 & 유럽' ? '🇨🇭 ' : '🌍 '}
+                          {getCountryEmoji(st.country)}
                           {st.country}
                         </span>
                       )}
