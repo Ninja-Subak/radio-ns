@@ -1059,7 +1059,14 @@ export default function App() {
           <span>
             이 브라우저 라디오는 HTML5 오디오 스트리밍 API와 Web Audio API 발진 회로를 결합하여 작성되었습니다.
           </span>
-          <span>© 2026 하이파이 인터넷 라디오 플레이어 콘솔</span>
+          <a 
+            href="https://www.youtube.com/@NinjaSubak" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-amber-500 transition-colors duration-300 font-bold decoration-dotted underline-offset-2 hover:underline cursor-pointer"
+          >
+            © 2026. https://www.youtube.com/@NinjaSubak
+          </a>
         </footer>
 
       </div>
