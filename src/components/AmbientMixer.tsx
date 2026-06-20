@@ -97,7 +97,7 @@ export const AmbientMixer: React.FC<AmbientMixerProps> = ({
                   value={sd.volume}
                   disabled={!isPowerOn || !sd.isPlaying}
                   onChange={(e) => onVolumeChange(sd.id, parseFloat(e.target.value))}
-                  className="w-full h-1 bg-neutral-900 rounded-lg appearance-none cursor-pointer accent-amber-500 disabled:opacity-20 disabled:cursor-not-allowed focus:outline-none"
+                  className="w-full cursor-pointer focus:outline-none"
                 />
                 <Volume2 className={`w-3.5 h-3.5 ${isActiveAndOn ? 'text-amber-500/80' : 'text-neutral-600'}`} />
               </div>

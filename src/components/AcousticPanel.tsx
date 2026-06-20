@@ -71,7 +71,7 @@ export const AcousticPanel: React.FC<AcousticPanelProps> = ({
             value={masterVolume}
             disabled={!isPowerOn}
             onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-            className="w-full h-2.5 bg-neutral-900 rounded-xl appearance-none cursor-pointer accent-amber-500 disabled:opacity-25 pb-2.5"
+            className="w-full cursor-pointer focus:outline-none py-1"
             title="마스터 라운드 음량 페이더"
           />
         </div>

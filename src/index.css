@@ -5,3 +5,96 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
+
+/* Premium custom range slider styling to guarantee horizontal lines are visible as a beautiful light gray across all browsers */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge, Opera) Track */
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  background: #404040; /* Light gray line - neutral-700 */
+  border-radius: 9999px;
+  transition: background 0.15s ease;
+}
+
+/* Webkit Hover Track */
+input[type="range"]:not(:disabled):hover::-webkit-slider-runnable-track {
+  background: #525252; /* Lighter gray - neutral-600 */
+}
+
+/* Webkit Thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 9999px;
+  background: #f59e0b; /* amber-500 */
+  cursor: pointer;
+  margin-top: -4px; /* Center thumb on a 4px track: (4px / 2) - (12px / 2) */
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.4);
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+input[type="range"]:not(:disabled):hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+  background: #fbbf24; /* amber-400 */
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+/* Webkit Disabled States */
+input[type="range"]:disabled::-webkit-slider-runnable-track {
+  background: #262626; /* neutral-800 */
+  opacity: 0.4;
+}
+
+input[type="range"]:disabled::-webkit-slider-thumb {
+  background: #525252; /* neutral-600 */
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.4;
+}
+
+/* Firefox Track */
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 4px;
+  background: #404040; /* Light gray line */
+  border-radius: 9999px;
+}
+
+/* Firefox Thumb */
+input[type="range"]::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border: none;
+  border-radius: 9999px;
+  background: #f59e0b; /* amber-500 */
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.4);
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+input[type="range"]:not(:disabled):hover::-moz-range-thumb {
+  transform: scale(1.2);
+  background: #fbbf24;
+}
+
+/* Firefox Disabled States */
+input[type="range"]:disabled::-moz-range-track {
+  background: #262626;
+  opacity: 0.4;
+}
+
+input[type="range"]:disabled::-moz-range-thumb {
+  background: #525252;
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+

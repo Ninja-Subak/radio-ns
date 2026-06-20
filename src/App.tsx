@@ -214,12 +214,30 @@ export default function App() {
 
   // Clean up global Audio Engine when unmounted completely
   const [isBypassActive, setIsBypassActive] = useState(false);
+  const [streamStatus, setStreamStatus] = useState<'idle' | 'loading' | 'active' | 'inactive'>('idle');
 
   useEffect(() => {
     globalAudioEngine.registerBypassCallback((active) => {
       setIsBypassActive(active);
     });
     setIsBypassActive(globalAudioEngine.getBypassMode());
+
+    globalAudioEngine.registerStreamStatusCallback((status, errorDetail) => {
+      setStreamStatus(status);
+      if (status === 'loading') {
+        setIsLoadingStream(true);
+        setStreamError(null);
+      } else if (status === 'active') {
+        setIsLoadingStream(false);
+        setStreamError(null);
+      } else if (status === 'inactive') {
+        setIsLoadingStream(false);
+        setStreamError(errorDetail || '주파수 전송 정보 없음 (방송 비활성화)');
+      } else if (status === 'idle') {
+        setIsLoadingStream(false);
+        setStreamError(null);
+      }
+    });
   }, []);
 
   const handleToggleBypassMode = () => {
@@ -432,9 +450,30 @@ export default function App() {
                       <div>
                         {/* Favorite Badge */}
                         <div className="flex items-center justify-between gap-2.5">
-                          <span className="text-xs font-bold text-amber-500/90 flex items-center gap-1 font-mono uppercase bg-amber-950/30 border border-amber-900/30 px-1.5 py-0.5 rounded">
-                            {currentStation.genre}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-amber-500/90 flex items-center gap-1 font-mono uppercase bg-amber-950/30 border border-amber-900/30 px-1.5 py-0.5 rounded">
+                              {currentStation.genre}
+                            </span>
+                            {/* Live broadcast health indicator LED */}
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold leading-none border transition-all ${
+                              streamStatus === 'active' 
+                                ? 'bg-emerald-950/30 border-emerald-900/40 text-emerald-400' 
+                                : streamStatus === 'loading'
+                                ? 'bg-amber-950/30 border-amber-900/40 text-amber-400 animate-pulse'
+                                : streamStatus === 'inactive'
+                                ? 'bg-rose-950/30 border-rose-900/40 text-rose-400'
+                                : 'bg-neutral-900 border-neutral-800 text-neutral-500'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                streamStatus === 'active' ? 'bg-emerald-400 shadow-[0_0_4px_#34d399]' :
+                                streamStatus === 'loading' ? 'bg-amber-400 animate-ping' :
+                                streamStatus === 'inactive' ? 'bg-rose-500 shadow-[0_0_4px_#f43f5e]' : 'bg-neutral-500'
+                              }`} />
+                              {streamStatus === 'active' ? 'ACTIVE (방송 활성)' :
+                               streamStatus === 'loading' ? '동조 대기...' :
+                               streamStatus === 'inactive' ? 'OFFLINE (송출 중단)' : 'STANDBY'}
+                            </span>
+                          </div>
                           {favorites.includes(currentStation.id) && (
                             <Heart className="w-3.5 h-3.5 fill-pink-500 text-pink-500 shrink-0" />
                           )}
@@ -490,8 +529,8 @@ export default function App() {
                         <span className="text-[8px] font-mono text-neutral-500">PAUSE</span>
                       </div>
                       <div className="flex items-center gap-1 ml-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isBypassActive ? 'bg-emerald-400 shadow-[0_0_4px_#10b981]' : 'bg-neutral-805'}`} />
-                        <span className="text-[8px] font-mono text-neutral-550" title="CORS 보호 장치 가동됨">CORS 우회</span>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isBypassActive ? 'bg-emerald-400 shadow-[0_0_4px_#10b981]' : 'bg-neutral-800'}`} />
+                        <span className="text-[8px] font-mono text-neutral-500" title="CORS 보호 장치 가동됨">CORS 우회</span>
                       </div>
                     </div>
                     {isLoadingStream && (
@@ -595,6 +634,7 @@ export default function App() {
               stations={stations}
               favorites={favorites}
               activeStationId={activeStationId}
+              streamStatus={streamStatus}
               onSelectStation={handleSelectStation}
               onToggleFavorite={handleToggleFavorite}
               onDeleteCustomStation={handleDeleteCustomStation}

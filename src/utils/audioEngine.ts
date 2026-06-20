@@ -34,10 +34,33 @@ export class AudioEngine {
   // Status flags
   private isInitialized = false;
   private currentEQMode: EQMode = 'Normal';
-  private isBypassMode = false;
+  private isBypassMode = true;
   private currentVolume = 0.8;
   private currentUrl = '';
   private onBypassChangeCallback: ((active: boolean) => void) | null = null;
+  private onStreamStatusCallback: ((status: 'idle' | 'loading' | 'active' | 'inactive', errorDetail?: string) => void) | null = null;
+  private connectionTimeoutRef: any = null;
+
+  // Stored targets to avoid early initialization traps
+  private targetMasterVolume = 0.8;
+  private targetStaticVolume = 0.0;
+  private ambientVolumes: { [key: string]: number } = {};
+
+  private clearConnectionTimeout() {
+    if (this.connectionTimeoutRef) {
+      clearTimeout(this.connectionTimeoutRef);
+      this.connectionTimeoutRef = null;
+    }
+  }
+
+  private startConnectionTimeout() {
+    this.clearConnectionTimeout();
+    this.connectionTimeoutRef = setTimeout(() => {
+      if (this.onStreamStatusCallback) {
+        this.onStreamStatusCallback('inactive', '수신 대역 정보 없음 (오프라인)');
+      }
+    }, 6000); // 6s timeout for signal check
+  }
 
   constructor() {
     // Initial audio stream element
@@ -50,12 +73,51 @@ export class AudioEngine {
     this.bypassAudioStream = new Audio();
     this.bypassAudioStream.preload = 'none';
 
+    // Setup active signal listeners
+    const handlePlayConfirmed = () => {
+      this.clearConnectionTimeout();
+      if (this.onStreamStatusCallback) {
+        this.onStreamStatusCallback('active');
+      }
+    };
+
+    const handleLoadError = (e: Event) => {
+      if (!this.isBypassMode && this.audioStream) {
+        return; 
+      }
+      this.clearConnectionTimeout();
+      if (this.onStreamStatusCallback) {
+        this.onStreamStatusCallback('inactive', '방송 송출 장애 (연결 실패)');
+      }
+    };
+
+    this.audioStream.addEventListener('playing', handlePlayConfirmed);
+    this.audioStream.addEventListener('timeupdate', () => {
+      if (this.audioStream && this.audioStream.currentTime > 0) {
+        handlePlayConfirmed();
+      }
+    });
+
+    this.bypassAudioStream.addEventListener('playing', handlePlayConfirmed);
+    this.bypassAudioStream.addEventListener('timeupdate', () => {
+      if (this.bypassAudioStream && this.bypassAudioStream.currentTime > 0) {
+        handlePlayConfirmed();
+      }
+    });
+    this.bypassAudioStream.addEventListener('error', handleLoadError);
+
     // If standard audio stream fails to load on CORS-restricted radios, auto-recover using direct playback!
     this.audioStream.addEventListener('error', () => {
       if (this.currentUrl) {
         this.enableAutoBypass(this.currentUrl);
+      } else {
+        handleLoadError(new Event('error'));
       }
     });
+  }
+
+  public registerStreamStatusCallback(callback: (status: 'idle' | 'loading' | 'active' | 'inactive', errorDetail?: string) => void) {
+    this.onStreamStatusCallback = callback;
   }
 
   /**
@@ -73,7 +135,7 @@ export class AudioEngine {
 
       // Setup Master Gain
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = 0.8; // Default 80%
+      this.masterGain.gain.value = this.targetMasterVolume; // Set from stored target
 
       // Setup EQ chain (Low, Mid, High)
       this.eqLow = this.ctx.createBiquadFilter();
@@ -95,7 +157,7 @@ export class AudioEngine {
 
       // Setup Static Noise Gain
       this.staticGain = this.ctx.createGain();
-      this.staticGain.gain.value = 0.0; // Start silenced
+      this.staticGain.gain.value = this.targetStaticVolume * 0.35; // Set from stored target
 
       // Connect standard stream element
       // Standard audio element -> SourceNode -> StreamGain -> EQ low -> EQ mid -> EQ high -> Analyser -> Master Gain -> Destination
@@ -147,6 +209,11 @@ export class AudioEngine {
     this.resumeContext();
     this.currentUrl = url;
 
+    if (this.onStreamStatusCallback) {
+      this.onStreamStatusCallback('loading');
+    }
+    this.startConnectionTimeout();
+
     try {
       if (this.isBypassMode) {
         // Stop standard stream to prevent double audios
@@ -187,6 +254,10 @@ export class AudioEngine {
       }
     } catch (e) {
       console.error('Audio stream playback failed', e);
+      this.clearConnectionTimeout();
+      if (this.onStreamStatusCallback) {
+        this.onStreamStatusCallback('inactive', '수신 채널 인스턴스 실패');
+      }
     }
   }
 
@@ -194,6 +265,10 @@ export class AudioEngine {
    * Pauses the stream playback
    */
   public pauseStream() {
+    this.clearConnectionTimeout();
+    if (this.onStreamStatusCallback) {
+      this.onStreamStatusCallback('idle');
+    }
     if (this.audioStream) {
       this.audioStream.pause();
     }
@@ -206,9 +281,9 @@ export class AudioEngine {
    * Sets master volume (0.0 to 1.0)
    */
   public setVolume(vol: number) {
-    this.resumeContext();
     const clamped = Math.max(0, Math.min(1, vol));
     this.currentVolume = clamped;
+    this.targetMasterVolume = clamped;
 
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setTargetAtTime(clamped, this.ctx.currentTime, 0.05);
@@ -267,8 +342,8 @@ export class AudioEngine {
    * Control the radio static visual and audio level (0.0 to 1.0)
    */
   public setStaticVolume(vol: number) {
-    this.resumeContext();
     const clamped = Math.max(0, Math.min(1, vol));
+    this.targetStaticVolume = clamped;
     if (this.staticGain && this.ctx) {
       // Scale-down static overall so it does not hurt ears
       const scaledVol = clamped * 0.35; 
@@ -330,7 +405,8 @@ export class AudioEngine {
     sounds.forEach((soundId) => {
       if (!this.ctx) return;
       const gainNode = this.ctx.createGain();
-      gainNode.gain.value = 0.0; // Start muted
+      const storedVol = this.ambientVolumes[soundId] !== undefined ? this.ambientVolumes[soundId] : 0.0;
+      gainNode.gain.value = storedVol; // Start with the correct stored volume
       gainNode.connect(this.masterGain!);
       this.ambientGains[soundId] = gainNode;
     });
@@ -346,10 +422,9 @@ export class AudioEngine {
    * Sets dynamic volumes for ambient sounds
    */
   public setAmbientVolume(soundId: string, vol: number) {
-    this.resumeContext();
+    this.ambientVolumes[soundId] = vol;
     const gain = this.ambientGains[soundId];
     if (gain && this.ctx) {
-      this.ctx.resume(); // Ensure active
       gain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
     }
   }

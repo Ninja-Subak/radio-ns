@@ -11,6 +11,8 @@ export interface RadioStation {
   genre: string;
   isCustom?: boolean;
   description?: string;
+  country?: string; // e.g., '대한민국', '미국', '영국', '스위스 & 유럽'
+  topic?: string;   // e.g., '음악', '뉴스/시사', '교양/학습', '힐링/로파이'
 }
 
 export interface AmbientSound {

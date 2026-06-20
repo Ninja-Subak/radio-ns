@@ -23,6 +23,8 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
   const [url, setUrl] = useState('');
   const [genre, setGenre] = useState('My Custom');
   const [description, setDescription] = useState('');
+  const [country, setCountry] = useState('대한민국');
+  const [topic, setTopic] = useState('음악');
   const [errorMess, setErrorMess] = useState('');
   const [successMess, setSuccessMess] = useState(false);
 
@@ -72,6 +74,8 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
       url: url.trim(),
       genre: genre.trim() || 'Custom',
       description: description.trim() || '사용자 커스텀 개인 채널 방송망.',
+      country,
+      topic,
     });
 
     // Reset Form
@@ -80,6 +84,8 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
     setUrl('');
     setGenre('My Custom');
     setDescription('');
+    setCountry('대한민국');
+    setTopic('음악');
     setSuccessMess(true);
     setTimeout(() => setSuccessMess(false), 3000);
   };
@@ -172,6 +178,36 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-200 focus:outline-none focus:border-amber-500"
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] font-mono text-neutral-500 block mb-1 font-bold">국가 분류</label>
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 cursor-pointer"
+            >
+              <option value="대한민국">🇰🇷 대한민국</option>
+              <option value="미국">🇺🇸 미국</option>
+              <option value="영국">🇬🇧 영국</option>
+              <option value="스위스 & 유럽">🇪🇺 스위스 & 유럽</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-mono text-neutral-500 block mb-1 font-bold">주제 분류</label>
+            <select
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-300 focus:outline-none focus:border-amber-500 cursor-pointer"
+            >
+              <option value="음악">🎵 음악</option>
+              <option value="뉴스/시사">📰 뉴스/시사</option>
+              <option value="교양/학습">🎓 교양/학습</option>
+              <option value="힐링/로파이">🧘 힐링/로파이</option>
+            </select>
           </div>
         </div>
 
