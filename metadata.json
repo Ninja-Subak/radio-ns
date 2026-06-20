@@ -1,0 +1,6 @@
+{
+  "name": "라디오 플레이어",
+  "description": "다양한 장르의 실시간 스트리밍 방송을 감상하고 나만의 채널을 추가할 수 있는 프리미엄 감성 라디오 플레이어입니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
