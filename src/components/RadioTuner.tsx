@@ -98,13 +98,13 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
   const nearestInfo = getNearestStationLabel();
 
   return (
-    <div className="bg-white border border-neutral-300 rounded-2xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-      <div className="flex items-center justify-between mb-4 border-b border-neutral-100 pb-3">
+    <div className="bg-neutral-900 border-2 border-neutral-800 rounded-2xl p-5 shadow-inner">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]" />
-          <span className="text-xs font-sans text-neutral-800 uppercase tracking-wider font-extrabold">FM ANALOG DIAL SENSOR</span>
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+          <span className="text-xs font-mono text-amber-500 uppercase tracking-widest">FM ANALOG DIAL SENSOR</span>
         </div>
-        <span className="text-xs font-mono text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200">87.5 MHz - 108.0 MHz</span>
+        <span className="text-xs font-mono text-neutral-500">87.5 MHz - 108.0 MHz</span>
       </div>
 
       {/* Retro Scale window */}
@@ -114,13 +114,13 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        className={`relative h-24 bg-neutral-950 border border-neutral-800 rounded-xl overflow-hidden select-none cursor-ew-resize transition-all shadow-inner ${
-          isPowerOn ? 'opacity-100 ring-1 ring-amber-500/15' : 'opacity-40 cursor-not-allowed'
+        className={`relative h-24 bg-neutral-950 border border-neutral-800 rounded-xl overflow-hidden select-none cursor-ew-resize transition-all ${
+          isPowerOn ? 'opacity-100' : 'opacity-40 cursor-not-allowed'
         }`}
       >
         {/* Glow backlight inside tuner scale */}
         {isPowerOn && (
-          <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-amber-950/5 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-amber-950/10 via-amber-950/5 to-transparent pointer-events-none" />
         )}
 
         {/* Dynamic tick marks */}
@@ -142,7 +142,7 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
                 style={{ width: '1px' }}
               >
                 {showLabel && (
-                  <span className="text-[10px] font-mono text-neutral-450 mb-1 leading-none font-bold">
+                  <span className="text-[10px] font-mono text-neutral-500 mb-1 leading-none font-bold">
                     {freq}
                   </span>
                 )}
@@ -152,7 +152,7 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
                       ? 'h-8 bg-neutral-500' 
                       : isHalf 
                         ? 'h-5 bg-neutral-700' 
-                        : 'h-3 bg-neutral-800/80'
+                        : 'h-3 bg-neutral-800'
                   } ${isPowerOn && Math.abs(currentFrequency - freq) < 0.05 ? 'bg-amber-400 w-[1.5px]' : ''}`} 
                 />
               </div>
@@ -169,8 +169,8 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
               className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer pointer-events-none"
               style={{ left: `${pos}%` }}
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-500/80 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
-              <div className="absolute -bottom-8 scale-0 group-hover:scale-100 transition-transform bg-neutral-800 border border-neutral-700 text-[10px] text-amber-350 font-mono py-0.5 px-1.5 rounded whitespace-nowrap z-30 shadow-md">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60 shadow-[0_0_6px_rgba(245,158,11,0.6)] animate-pulse" />
+              <div className="absolute -bottom-8 scale-0 group-hover:scale-100 transition-transform bg-neutral-800 text-[9px] text-amber-400 font-mono py-0.5 px-1 rounded whitespace-nowrap z-30">
                 {st.name} ({st.frequency})
               </div>
             </div>
@@ -180,11 +180,11 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
         {/* Sliding Amber Tuning Needle */}
         {isPowerOn && (
           <div 
-            className="absolute top-0 bottom-0 w-0.5 bg-amber-500 transition-all duration-75 shadow-[0_0_10px_#f59e0b] pointer-events-none"
+            className="absolute top-0 bottom-0 w-0.5 bg-amber-500 transition-all duration-75 shadow-[0_0_8px_#f59e0b] pointer-events-none"
             style={{ left: `${needlePosition}%` }}
           >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-amber-500 rotate-45 border-t border-l border-amber-300 shadow-md animate-bounce" />
-            <div className="absolute top-5 left-2.5 bg-amber-950/95 border border-amber-500 text-[10px] font-mono font-extrabold text-amber-400 px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(0,0,0,0.5)] whitespace-nowrap">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 bg-amber-500 rotate-45 border-t border-l border-amber-300 shadow-md" />
+            <div className="absolute top-5 left-2 bg-amber-950/90 border border-amber-500 text-[10px] font-mono font-bold text-amber-400 px-1 py-0.5 rounded shadow whitespace-nowrap">
               {currentFrequency.toFixed(1)} MHz
             </div>
           </div>
@@ -199,7 +199,7 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
             id="fine-tune-down"
             disabled={!isPowerOn}
             onClick={() => handleFineTune(-0.1)}
-            className="px-3.5 py-2 bg-neutral-50 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-mono text-neutral-800 font-bold cursor-pointer transition-all hover:scale-[1.02] flex items-center gap-1 shadow-sm"
+            className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono text-neutral-300 font-medium cursor-pointer flex items-center gap-1"
           >
             ◀ 0.1 MHz
           </button>
@@ -208,7 +208,7 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
             id="fine-tune-up"
             disabled={!isPowerOn}
             onClick={() => handleFineTune(0.1)}
-            className="px-3.5 py-2 bg-neutral-50 hover:bg-neutral-100 disabled:opacity-30 disabled:hover:bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-mono text-neutral-800 font-bold cursor-pointer transition-all hover:scale-[1.02] flex items-center gap-1 shadow-sm"
+            className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-30 disabled:hover:bg-neutral-900 border border-neutral-800 rounded-lg text-xs font-mono text-neutral-300 font-medium cursor-pointer flex items-center gap-1"
           >
             0.1 MHz ▶
           </button>
@@ -218,10 +218,10 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
             <button
               id="auto-snap-tuner"
               onClick={() => onFrequencyChange(nearestInfo.station.frequency)}
-              className="px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl text-xs font-mono text-amber-700 font-bold cursor-pointer animate-pulse transition-all hover:scale-[1.02] flex items-center gap-1.5 shadow-sm"
+              className="px-2.5 py-1.5 bg-amber-950 hover:bg-amber-900 border border-amber-600/40 rounded-lg text-xs font-mono text-amber-400 font-semibold cursor-pointer animate-pulse flex items-center gap-1"
               title="가장 가까운 채널 정교화 스냅"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-amber-600 animate-spin" />
+              <RotateCcw className="w-3 h-3 text-amber-400" />
               자동 스냅 ({nearestInfo.station.frequency})
             </button>
           )}
@@ -232,23 +232,23 @@ export const RadioTuner: React.FC<RadioTunerProps> = ({
           {isPowerOn ? (
             nearestInfo ? (
               nearestInfo.distance === 0 ? (
-                <div className="text-emerald-700 text-xs flex items-center justify-end gap-2 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl shadow-sm">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+                <div className="text-emerald-400 text-xs flex items-center justify-end gap-1 font-semibold">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   신호 최적 수신 중: {nearestInfo.station.name}
                 </div>
               ) : (
-                <div className="text-amber-800 text-xs flex items-center justify-end gap-2 font-bold bg-amber-50 border border-amber-205 px-3 py-1.5 rounded-xl shadow-sm">
-                  <div className="w-2 h-2 rounded-full bg-amber-500/60 animate-ping" />
-                  주파수 미세 이탈 (스냅 클릭 요망)
+                <div className="text-amber-500/75 text-xs flex items-center justify-end gap-1 font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60 animate-ping" />
+                  주파수 미세 이탈 (잡음 감쇄 필요)
                 </div>
               )
             ) : (
-              <span className="inline-block text-red-700 text-xs font-extrabold bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl text-right shadow-sm">
-                통신 감도 없음 (빈 주파수 화이트 노이즈)
+              <span className="text-red-500 text-xs font-medium">
+                통신 감도 없음 (빈 주파수 노이즈 출력)
               </span>
             )
           ) : (
-            <span className="inline-block text-neutral-500 text-xs font-bold bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-200 text-right shadow-sm">장치 전원 꺼짐</span>
+            <span className="text-neutral-600 text-xs text-right">장치 전원 꺼짐</span>
           )}
         </div>
       </div>

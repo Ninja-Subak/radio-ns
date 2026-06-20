@@ -8,6 +8,7 @@ import { EQMode } from '../types';
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private audioStream: HTMLAudioElement | null = null;
+  private bypassAudioStream: HTMLAudioElement | null = null;
   private streamSourceNode: MediaElementAudioSourceNode | null = null;
   
   // Equalizer nodes
@@ -33,6 +34,10 @@ export class AudioEngine {
   // Status flags
   private isInitialized = false;
   private currentEQMode: EQMode = 'Normal';
+  private isBypassMode = false;
+  private currentVolume = 0.8;
+  private currentUrl = '';
+  private onBypassChangeCallback: ((active: boolean) => void) | null = null;
 
   constructor() {
     // Initial audio stream element
@@ -40,6 +45,17 @@ export class AudioEngine {
     this.audioStream.crossOrigin = 'anonymous';
     // Prevent standard browser logs about user-interaction blockages
     this.audioStream.preload = 'none';
+
+    // Backup stream completely bypassing AudioContext to avoid CORS blockade
+    this.bypassAudioStream = new Audio();
+    this.bypassAudioStream.preload = 'none';
+
+    // If standard audio stream fails to load on CORS-restricted radios, auto-recover using direct playback!
+    this.audioStream.addEventListener('error', () => {
+      if (this.currentUrl) {
+        this.enableAutoBypass(this.currentUrl);
+      }
+    });
   }
 
   /**
@@ -129,17 +145,45 @@ export class AudioEngine {
    */
   public playStream(url: string) {
     this.resumeContext();
-    if (!this.audioStream) return;
+    this.currentUrl = url;
 
     try {
-      this.audioStream.src = url;
-      this.audioStream.load();
-      const playPromise = this.audioStream.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.warn('Playback error caught gracefully:', error);
-        });
+      if (this.isBypassMode) {
+        // Stop standard stream to prevent double audios
+        if (this.audioStream) {
+          this.audioStream.pause();
+          this.audioStream.src = '';
+        }
+        
+        if (this.bypassAudioStream) {
+          this.bypassAudioStream.src = url;
+          this.bypassAudioStream.volume = this.currentVolume;
+          this.bypassAudioStream.load();
+          const p = this.bypassAudioStream.play();
+          if (p !== undefined) {
+            p.catch(error => {
+              console.warn('Bypass audio play failed:', error);
+            });
+          }
+        }
+      } else {
+        // Stop bypass stream to prevent double audios
+        if (this.bypassAudioStream) {
+          this.bypassAudioStream.pause();
+          this.bypassAudioStream.src = '';
+        }
+
+        if (this.audioStream) {
+          this.audioStream.src = url;
+          this.audioStream.load();
+          const p = this.audioStream.play();
+          if (p !== undefined) {
+            p.catch(error => {
+              console.warn('Standard stream play failed, auto triggering bypass:', error);
+              this.enableAutoBypass(url);
+            });
+          }
+        }
       }
     } catch (e) {
       console.error('Audio stream playback failed', e);
@@ -153,6 +197,9 @@ export class AudioEngine {
     if (this.audioStream) {
       this.audioStream.pause();
     }
+    if (this.bypassAudioStream) {
+      this.bypassAudioStream.pause();
+    }
   }
 
   /**
@@ -161,9 +208,59 @@ export class AudioEngine {
   public setVolume(vol: number) {
     this.resumeContext();
     const clamped = Math.max(0, Math.min(1, vol));
+    this.currentVolume = clamped;
+
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setTargetAtTime(clamped, this.ctx.currentTime, 0.05);
     }
+    
+    // Sync to direct HTML5 audio bypass channel as well
+    if (this.bypassAudioStream) {
+      this.bypassAudioStream.volume = clamped;
+    }
+  }
+
+  /**
+   * Safe auto bypass trigger
+   */
+  private enableAutoBypass(url: string) {
+    if (this.isBypassMode) return;
+    this.isBypassMode = true;
+    if (this.onBypassChangeCallback) {
+      this.onBypassChangeCallback(true);
+    }
+    this.playStream(url);
+  }
+
+  /**
+   * Manually sets bypass mode
+   */
+  public setBypassMode(active: boolean) {
+    if (this.isBypassMode === active) return;
+    this.isBypassMode = active;
+    
+    if (this.onBypassChangeCallback) {
+      this.onBypassChangeCallback(active);
+    }
+
+    if (this.currentUrl) {
+      // Re-route current stream with the new channel setup
+      this.playStream(this.currentUrl);
+    }
+  }
+
+  /**
+   * Get current bypass status
+   */
+  public getBypassMode(): boolean {
+    return this.isBypassMode;
+  }
+
+  /**
+   * Register a callback for when bypass status toggles (e.g. to update React state)
+   */
+  public registerBypassCallback(callback: (active: boolean) => void) {
+    this.onBypassChangeCallback = callback;
   }
 
   /**

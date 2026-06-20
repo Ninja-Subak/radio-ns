@@ -93,17 +93,17 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
   };
 
   return (
-    <div className="bg-white border border-neutral-300 rounded-2xl p-6 flex flex-col h-full shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-      <div className="flex items-center gap-2 mb-3.5 border-b border-neutral-100 pb-3">
-        <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]" />
-        <h3 className="text-sm font-sans text-neutral-800 uppercase tracking-wider font-extrabold">
+    <div className="bg-neutral-900 border-2 border-neutral-800 rounded-2xl p-5 flex flex-col h-full">
+      <div className="flex items-center gap-1.5 mb-3.5">
+        <Plus className="w-4 h-4 text-amber-500" />
+        <h3 className="text-sm font-mono text-neutral-200 uppercase/bold tracking-wider font-bold">
           나만의 웹 스트리밍 라디오 주파수 개설
         </h3>
       </div>
 
       {/* Templates helper */}
-      <div className="mb-4.5 bg-neutral-50 border border-neutral-200 rounded-xl p-3">
-        <span className="text-[10px] font-sans text-neutral-600 mb-2 block font-extrabold">
+      <div className="mb-4">
+        <span className="text-[10px] font-mono text-neutral-500 mb-1.5 block">
           ※ 템플릿 클릭 시 입력값이 자동 대입됩니다:
         </span>
         <div className="flex flex-wrap gap-1.5">
@@ -113,7 +113,7 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
               type="button"
               key={i}
               onClick={() => applyTemplate(tpl)}
-              className="px-2.5 py-1.5 text-[10px] font-mono border border-neutral-250 hover:border-amber-500 bg-white text-neutral-700 hover:text-amber-700 hover:bg-amber-50/30 rounded-lg cursor-pointer transition-all hover:scale-[1.02]"
+              className="px-2 py-1 text-[10px] font-mono border border-neutral-800 hover:border-amber-600/40 bg-neutral-950/40 text-neutral-400 hover:text-amber-400 rounded-lg cursor-pointer transition-colors"
             >
               {tpl.name} ({tpl.freq}M)
             </button>
@@ -121,22 +121,22 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3.5">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-sans text-neutral-600 block mb-1.5 font-extrabold">채널 수신 이름</label>
+            <label className="text-[10px] font-mono text-neutral-450 block mb-1">채널 수신 이름</label>
             <input
               id="custom-station-name"
               type="text"
               placeholder="예: 우리집 로파이"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-neutral-50/50 border border-neutral-250 focus:border-amber-500 focus:bg-white rounded-xl p-2.5 text-xs text-neutral-800 focus:outline-none transition-all"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-200 focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <div>
-            <label className="text-[10px] font-sans text-neutral-600 block mb-1.5 font-extrabold">주파수 대역 (87.5-108.0)</label>
+            <label className="text-[10px] font-mono text-neutral-450 block mb-1">주파수 대역 (87.5-108.0)</label>
             <input
               id="custom-station-frequency"
               type="number"
@@ -144,59 +144,59 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
               placeholder="예: 95.5"
               value={frequency}
               onChange={(e) => setFrequency(e.target.value)}
-              className="w-full bg-neutral-50/50 border border-neutral-250 focus:border-amber-500 focus:bg-white rounded-xl p-2.5 text-xs text-neutral-800 focus:outline-none transition-all"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-200 focus:outline-none focus:border-amber-500"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-sans text-neutral-600 block mb-1.5 font-extrabold">장르 태그</label>
+            <label className="text-[10px] font-mono text-neutral-500 block mb-1">장르 태그</label>
             <input
               id="custom-station-genre"
               type="text"
               placeholder="예: Lofi, Jazz"
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
-              className="w-full bg-neutral-50/50 border border-neutral-250 focus:border-amber-500 focus:bg-white rounded-xl p-2.5 text-xs text-neutral-800 focus:outline-none transition-all"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-200 focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <div>
-            <label className="text-[10px] font-sans text-neutral-600 block mb-1.5 font-extrabold">한줄 요약 설명</label>
+            <label className="text-[10px] font-mono text-neutral-500 block mb-1">한줄 요약 설명</label>
             <input
               id="custom-station-desc"
               type="text"
               placeholder="간단한 메모..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-neutral-50/50 border border-neutral-250 focus:border-amber-500 focus:bg-white rounded-xl p-2.5 text-xs text-neutral-800 focus:outline-none transition-all"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-200 focus:outline-none focus:border-amber-500"
             />
           </div>
         </div>
 
         <div>
-          <label className="text-[10px] font-sans text-neutral-600 block mb-1.5 font-extrabold">스트리밍 스트림 소스 주소 (Audio stream URL)</label>
+          <label className="text-[10px] font-mono text-neutral-500 block mb-1">스트리밍 스트림 소스 주소 (Audio stream URL)</label>
           <input
             id="custom-station-url"
             type="url"
             placeholder="http:// 또는 https:// 로 시작하는 오디오 오리진 주소"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="w-full bg-neutral-50/50 border border-neutral-250 focus:border-amber-500 focus:bg-white rounded-xl p-2.5 text-xs text-neutral-800 focus:outline-none transition-all font-mono"
+            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 text-xs text-neutral-250 focus:outline-none focus:border-amber-500 font-mono"
           />
         </div>
 
         {/* Message statuses */}
         {errorMess && (
-          <p id="custom-station-error" className="text-[11px] font-sans text-red-750 bg-red-50 border border-red-200 p-3 rounded-xl shadow-sm leading-relaxed">
+          <p id="custom-station-error" className="text-[10px] font-mono text-red-400 bg-red-950/25 border border-red-900/40 p-2 rounded-xl">
             ⚠️ {errorMess}
           </p>
         )}
 
         {successMess && (
-          <p id="custom-station-success" className="text-[11px] font-sans text-emerald-750 bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-center gap-2 shadow-sm">
-            <CheckCircle className="w-4 h-4 text-emerald-600" />
+          <p id="custom-station-success" className="text-[10px] font-mono text-emerald-400 bg-emerald-950/25 border border-emerald-900/40 p-2 rounded-xl flex items-center gap-1">
+            <CheckCircle className="w-3.5 h-3.5" />
             성공적으로 지정 주파수에 채널이 개설되었습니다!
           </p>
         )}
@@ -205,7 +205,7 @@ export const AddStationForm: React.FC<AddStationFormProps> = ({
         <button
           id="custom-station-submit"
           type="submit"
-          className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:hover:bg-amber-500 text-neutral-950 font-extrabold rounded-xl text-xs font-sans cursor-pointer transition-all hover:scale-[1.01] shadow-md flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:hover:bg-amber-500 text-neutral-950 font-bold rounded-xl text-xs font-mono cursor-pointer transition-colors shadow flex items-center justify-center gap-1.5"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           주파수 개설 등록 (Tune In)

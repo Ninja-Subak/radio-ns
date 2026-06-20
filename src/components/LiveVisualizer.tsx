@@ -12,6 +12,7 @@ interface LiveVisualizerProps {
   isPowerOn: boolean;
   currentFrequency: number;
   hasSignal: boolean;
+  isBypassActive?: boolean;
 }
 
 export const LiveVisualizer: React.FC<LiveVisualizerProps> = ({
@@ -19,6 +20,7 @@ export const LiveVisualizer: React.FC<LiveVisualizerProps> = ({
   isPowerOn,
   currentFrequency,
   hasSignal,
+  isBypassActive = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [visualMode, setVisualMode] = useState<'wave' | 'bars'>('wave');
@@ -83,8 +85,9 @@ export const LiveVisualizer: React.FC<LiveVisualizerProps> = ({
       let dataArray = new Uint8Array(bufferLength);
 
       let isActive = isPlaying;
+      let useMockData = !analyser || !isActive || isBypassActive;
 
-      if (analyser && isActive) {
+      if (!useMockData && analyser) {
         if (visualMode === 'bars') {
           analyser.getByteFrequencyData(dataArray);
         } else {

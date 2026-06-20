@@ -36,25 +36,25 @@ export const AcousticPanel: React.FC<AcousticPanelProps> = ({
   };
 
   return (
-    <div className="bg-white border border-neutral-300 rounded-2xl p-6 flex flex-col h-full gap-5.5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+    <div className="bg-neutral-900 border-2 border-neutral-800 rounded-2xl p-5 flex flex-col h-full gap-5">
       
       {/* 1. Master Volume Mixer Board */}
-      <div className="border-b border-neutral-100 pb-4.5">
+      <div>
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]" />
-            <span className="text-xs font-sans font-extrabold text-neutral-800 uppercase tracking-wider">
+          <div className="flex items-center gap-1.5">
+            <Volume2 className="w-4 h-4 text-amber-500" />
+            <span className="text-xs font-mono font-bold text-neutral-200 uppercase/bold tracking-wider">
               마스터 음량 페이더 (Master Volume)
             </span>
           </div>
-          <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+          <span className="text-xs font-mono font-bold text-amber-400">
             {masterVolume === 0 ? 'MUTE' : `${(masterVolume * 100).toFixed(0)}%`}
           </span>
         </div>
 
-        <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4.5 flex items-center gap-4 relative overflow-hidden shadow-inner">
+        <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-3 flex items-center gap-4 relative overflow-hidden">
           {/* Decibel tick markers behind progress bar */}
-          <div className="absolute inset-x-0 bottom-1 h-3 flex justify-between px-6 pointer-events-none opacity-60">
+          <div className="absolute inset-x-0 bottom-1 h-3 flex justify-between px-6 pointer-events-none opacity-45">
             {[-Infinity, -40, -20, -10, -5, 0, 3, 6].map((db, i) => (
               <span key={i} className="text-[7px] font-mono text-neutral-500 leading-none">
                 {db === -Infinity ? '∞' : `${db > 0 ? '+' : ''}${db}`}
@@ -71,17 +71,17 @@ export const AcousticPanel: React.FC<AcousticPanelProps> = ({
             value={masterVolume}
             disabled={!isPowerOn}
             onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-            className="w-full h-2.5 bg-neutral-200 rounded-xl appearance-none cursor-pointer accent-amber-500 disabled:opacity-25 pb-2.5"
+            className="w-full h-2.5 bg-neutral-900 rounded-xl appearance-none cursor-pointer accent-amber-500 disabled:opacity-25 pb-2.5"
             title="마스터 라운드 음량 페이더"
           />
         </div>
       </div>
 
       {/* 2. Equalizer Preset Push-Buttons */}
-      <div className="border-b border-neutral-100 pb-4.5">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]" />
-          <span className="text-xs font-sans font-extrabold text-neutral-800 uppercase tracking-wider">
+      <div>
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <Sliders className="w-4 h-4 text-amber-500" />
+          <span className="text-xs font-mono font-bold text-neutral-200 uppercase/bold tracking-wider">
             어쿠스틱 EQ 프리셋 (Acoustic Equalizer)
           </span>
         </div>
@@ -95,10 +95,10 @@ export const AcousticPanel: React.FC<AcousticPanelProps> = ({
                 key={mode}
                 disabled={!isPowerOn}
                 onClick={() => onEQChange(mode)}
-                className={`text-[10px] font-mono py-2.5 px-1.5 border rounded-xl text-center font-bold cursor-pointer transition-all ${
+                className={`text-[10px] font-mono py-2 px-1.5 border rounded-xl text-center font-bold cursor-pointer transition-all ${
                   isSelected
-                    ? 'bg-amber-500 border-amber-600 text-neutral-950 shadow-[0_4px_16px_rgba(242,158,11,0.25)] scale-[1.03] font-extrabold'
-                    : 'bg-white border-neutral-200 text-neutral-600 hover:text-neutral-800 hover:border-neutral-350 hover:bg-neutral-50 disabled:opacity-30 disabled:hover:text-neutral-400'
+                    ? 'bg-amber-950/45 border-amber-500 text-amber-400 shadow-[0_2px_8px_rgba(245,158,11,0.2)]'
+                    : 'bg-neutral-950/50 border-neutral-800 text-neutral-400 hover:text-neutral-200 disabled:opacity-30 disabled:hover:text-neutral-400'
                 }`}
               >
                 {mode}
@@ -110,21 +110,21 @@ export const AcousticPanel: React.FC<AcousticPanelProps> = ({
 
       {/* 3. Sleep Timer (취면 예약 기능) */}
       <div className="mt-auto">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]" />
-            <span className="text-xs font-sans font-extrabold text-neutral-800 uppercase tracking-wider">
+        <div className="flex items-center justify-between mb-2.5">
+          <div className="flex items-center gap-1.5">
+            <Timer className="w-4 h-4 text-amber-500" />
+            <span className="text-xs font-mono font-bold text-neutral-200 uppercase/bold tracking-wider">
               취면 취침 예약 타이머
             </span>
           </div>
           {isPowerOn && sleepTimerDuration > 0 && (
-            <div className="px-2 py-1 bg-red-50 border border-red-200 text-[10px] text-red-650 font-mono font-bold rounded animate-pulse shadow-sm">
+            <div className="px-2 py-0.5 bg-red-950/40 border border-red-900/65 rounded text-[10px] text-red-400 font-mono font-bold animate-pulse">
               ⏱ {formatCountdown(sleepTimerDuration)} 남음
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 p-1 bg-neutral-50 border border-neutral-200 rounded-xl">
+        <div className="flex items-center gap-1.5 p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
           {[0, 15, 30, 45, 60].map((mins) => {
             const isMatching = 
               mins === 0 
@@ -137,10 +137,10 @@ export const AcousticPanel: React.FC<AcousticPanelProps> = ({
                 key={mins}
                 disabled={!isPowerOn}
                 onClick={() => onSleepTimerSet(mins)}
-                className={`flex-1 text-center py-2.5 text-[10px] font-mono font-bold rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 text-center py-2 text-[10px] font-mono font-bold rounded-lg cursor-pointer transition-all ${
                   isMatching && isPowerOn
-                    ? 'bg-amber-500 text-neutral-950 shadow-md font-extrabold'
-                    : 'text-neutral-500 hover:text-neutral-800 disabled:opacity-30'
+                    ? 'bg-amber-500 text-neutral-950 shadow'
+                    : 'text-neutral-400 hover:text-neutral-200 disabled:opacity-30 disabled:hover:text-neutral-400'
                 }`}
               >
                 {mins === 0 ? 'OFF' : `${mins}M`}
