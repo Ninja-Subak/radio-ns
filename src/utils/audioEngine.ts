@@ -34,7 +34,8 @@ export class AudioEngine {
   // Status flags
   private isInitialized = false;
   private currentEQMode: EQMode = 'Normal';
-  private isBypassMode = true;
+  private isBypassMode = false; // Prioritize Web Audio Graph EQ and Visualizer by default!
+  private isChangingOrStopping = false; // Latch to prevent false CORS trigger when swapping URLs
   private currentVolume = 0.8;
   private currentUrl = '';
   private onBypassChangeCallback: ((active: boolean) => void) | null = null;
@@ -107,8 +108,13 @@ export class AudioEngine {
     this.bypassAudioStream.addEventListener('error', handleLoadError);
 
     // If standard audio stream fails to load on CORS-restricted radios, auto-recover using direct playback!
-    this.audioStream.addEventListener('error', () => {
+    this.audioStream.addEventListener('error', (e) => {
+      // Ignore if we are intentionally changing/stopping or if source is empty/not set
+      if (this.isChangingOrStopping || !this.audioStream || !this.audioStream.src || this.audioStream.src === window.location.href) {
+        return;
+      }
       if (this.currentUrl) {
+        console.warn('Standard stream failed CORS or load, auto-bypassing:', this.currentUrl, e);
         this.enableAutoBypass(this.currentUrl);
       } else {
         handleLoadError(new Event('error'));
@@ -215,12 +221,14 @@ export class AudioEngine {
     this.startConnectionTimeout();
 
     try {
+      this.isChangingOrStopping = true;
       if (this.isBypassMode) {
         // Stop standard stream to prevent double audios
         if (this.audioStream) {
           this.audioStream.pause();
           this.audioStream.src = '';
         }
+        this.isChangingOrStopping = false;
         
         if (this.bypassAudioStream) {
           this.bypassAudioStream.src = url;
@@ -243,6 +251,7 @@ export class AudioEngine {
         if (this.audioStream) {
           this.audioStream.src = url;
           this.audioStream.load();
+          this.isChangingOrStopping = false; // Reset before initiating play
           const p = this.audioStream.play();
           if (p !== undefined) {
             p.catch(error => {
@@ -250,9 +259,12 @@ export class AudioEngine {
               this.enableAutoBypass(url);
             });
           }
+        } else {
+          this.isChangingOrStopping = false;
         }
       }
     } catch (e) {
+      this.isChangingOrStopping = false;
       console.error('Audio stream playback failed', e);
       this.clearConnectionTimeout();
       if (this.onStreamStatusCallback) {
@@ -269,12 +281,14 @@ export class AudioEngine {
     if (this.onStreamStatusCallback) {
       this.onStreamStatusCallback('idle');
     }
+    this.isChangingOrStopping = true;
     if (this.audioStream) {
       this.audioStream.pause();
     }
     if (this.bypassAudioStream) {
       this.bypassAudioStream.pause();
     }
+    this.isChangingOrStopping = false;
   }
 
   /**
@@ -380,8 +394,10 @@ export class AudioEngine {
       staticSource.connect(staticFilter);
       staticFilter.connect(this.staticGain);
       
-      // Connect to master level analyser so the wave still wobbles on empty static!
-      if (this.analyser) {
+      // Connect to eqLow so it goes through EQ, then analyser, then masterGain
+      if (this.eqLow) {
+        this.staticGain.connect(this.eqLow);
+      } else if (this.analyser) {
         this.staticGain.connect(this.analyser);
       } else {
         this.staticGain.connect(this.ctx.destination);
@@ -407,7 +423,13 @@ export class AudioEngine {
       const gainNode = this.ctx.createGain();
       const storedVol = this.ambientVolumes[soundId] !== undefined ? this.ambientVolumes[soundId] : 0.0;
       gainNode.gain.value = storedVol; // Start with the correct stored volume
-      gainNode.connect(this.masterGain!);
+      
+      // Route through EQ chain to allow equalizer shape profiling!
+      if (this.eqLow) {
+        gainNode.connect(this.eqLow);
+      } else {
+        gainNode.connect(this.masterGain!);
+      }
       this.ambientGains[soundId] = gainNode;
     });
 
