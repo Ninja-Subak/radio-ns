@@ -368,13 +368,13 @@ export default function App() {
   // Sync ambient sounds
   useEffect(() => {
     ambientSounds.forEach((sd) => {
-      if (isPowerOn && sd.isPlaying) {
+      if (sd.isPlaying) {
         globalAudioEngine.setAmbientVolume(sd.id, sd.volume);
       } else {
         globalAudioEngine.setAmbientVolume(sd.id, 0);
       }
     });
-  }, [ambientSounds, isPowerOn]);
+  }, [ambientSounds]);
 
   // Timer Countdown Logic
   useEffect(() => {
@@ -521,7 +521,6 @@ export default function App() {
   };
 
   const handleToggleAmbientSound = (id: string) => {
-    if (!isPowerOn) return;
     // Activate context security bypass
     globalAudioEngine.resumeContext();
 
