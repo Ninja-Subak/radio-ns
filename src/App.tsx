@@ -562,7 +562,7 @@ export default function App() {
                 <Radio className="w-5 h-5 stroke-[2.5]" />
               </div>
               <h1 className="text-xl md:text-2xl font-bold text-neutral-100 tracking-tight">
-                아날로그 하이파이 인터넷 라디오 플레이어
+                하이파이 라디오
               </h1>
             </div>
             <p className="text-xs text-neutral-500 mt-1">
