@@ -1,6 +1,16 @@
 <div align="center">
 
 <p align="center">
+  <img src="assets/logo.png" alt="Radio NS Logo" width="180">
+</p>
+
+<h1 align="center">📻 Radio NS</h1>
+
+<p align="center">
+Modern Open Source Internet Radio Platform
+</p>
+
+<p align="center">
   <img src="assets/github-banner.png" width="100%">
 </p>
 
