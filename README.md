@@ -1,5 +1,9 @@
 <div align="center">
 
+<p align="center">
+  <img src="assets/github-banner.png" width="100%">
+</p>
+
 # 📻 Radio NS
 
 ### Modern Open Source FM, AM & Internet Radio Platform
