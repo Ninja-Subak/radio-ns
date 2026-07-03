@@ -37,8 +37,7 @@ The long-term goal of this project is to become one of the world's most complete
 
 ## 📻 Radio
 
-- FM Radio
-- AM Radio
+- Internet Radio Platform
 - Internet Radio
 - Custom Radio Stations
 - Favorite Stations
