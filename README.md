@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="assets/github-banner.png" width="50%">
+  <img src="assets/github-banner.png" width="100%">
 </p>
 
 # 📻 Radio NS
